@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      # Use a volume
+      volumes:
+        # Request the volume with the given claimName
+        - name: mongo-storage
+          persistentVolumeClaim:
+            claimName: db
+      containers:
+        - name: mongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-storage # has to be indentical to one of the volume names defined above
+              mountPath: /data/db # map this directory in the container to the volume subPath
+              subPath: mongo # sub dir in the volume
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongosecret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongosecret
+                  key: MONGO_INITDB_ROOT_PASSWORD
